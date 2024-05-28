@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Grupo Sanguíneo</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+</head>
+
+<body>
+    <div class="container">
+        <div class="row mt-4 mb-4">
+            <div class="col-sm-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h1>Calculadora de Grupo Sanguíneo</h1>
+                        <form id="bloodTypeForm" class="row g-3">
+                            <div class="col-auto">
+                                <label for="motherBloodType" class="form-label">Grupo sanguíneo de la madre:</label>
+                                <select id="motherBloodType" class="form-select" required>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+
+                            <div class="col-auto">
+                                <label for="fatherBloodType" class="form-label">Grupo sanguíneo del padre:</label>
+                                <select id="fatherBloodType" class="form-select" required>
+                                    <option value="A+">A+</option>
+                                    <option value="A-">A-</option>
+                                    <option value="B+">B+</option>
+                                    <option value="B-">B-</option>
+                                    <option value="AB+">AB+</option>
+                                    <option value="AB-">AB-</option>
+                                    <option value="O+">O+</option>
+                                    <option value="O-">O-</option>
+                                </select>
+                            </div>
+
+                            <div class="col-auto align-self-end">
+                                <button type="button" class="btn btn-success"
+                                    onclick="calculateBloodType()">Calcular</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="result" id="result" style="display:none;">
+                            <p><strong>Probabilidad de que sea Grupo A:</strong> <span id="probA"></span>%</p>
+                            <p><strong>Probabilidad de que sea Grupo B:</strong> <span id="probB"></span>%</p>
+                            <p><strong>Probabilidad de que sea Grupo AB:</strong> <span id="probAB"></span>%</p>
+                            <p><strong>Probabilidad de que sea Grupo O:</strong> <span id="probO"></span>%</p>
+                            <p><strong>Factor RH del niño:</strong> <span id="rhFactor"></span></p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateBloodType() {
+            var motherBloodType = document.getElementById('motherBloodType').value;
+            var fatherBloodType = document.getElementById('fatherBloodType').value;
+
+            function getGenotype(bloodType) {
+                switch (bloodType) {
+                    case 'A+': return [['IA', 'i'], ['+', '+']];
+                    case 'A-': return [['IA', 'i'], ['-', '-']];
+                    case 'B+': return [['IB', 'i'], ['+', '+']];
+                    case 'B-': return [['IB', 'i'], ['-', '-']];
+                    case 'AB+': return [['IA', 'IB'], ['+', '+']];
+                    case 'AB-': return [['IA', 'IB'], ['-', '-']];
+                    case 'O+': return [['i', 'i'], ['+', '+']];
+                    case 'O-': return [['i', 'i'], ['-', '-']];
+                }
+            }
+
+            var motherGenotype = getGenotype(motherBloodType);
+            var fatherGenotype = getGenotype(fatherBloodType);
+
+            var bloodGroups = { 'A': 0, 'B': 0, 'AB': 0, 'O': 0 };
+            var rhFactors = { '+': 0, '-': 0 };
+
+            var totalBloodCombinations = 0;
+            var totalRhCombinations = 0;
+
+            // Calculate blood group probabilities
+            motherGenotype[0].forEach(function (motherAllele1) {
+                motherGenotype[0].forEach(function (motherAllele2) {
+                    fatherGenotype[0].forEach(function (fatherAllele1) {
+                        fatherGenotype[0].forEach(function (fatherAllele2) {
+                            var childGenotype = [motherAllele1, motherAllele2, fatherAllele1, fatherAllele2];
+                            var bloodGroup = determineBloodGroup(childGenotype);
+                            bloodGroups[bloodGroup]++;
+                            totalBloodCombinations++;
+                        });
+                    });
+                });
+            });
+
+            // Calculate Rh factor probabilities
+            motherGenotype[1].forEach(function (motherRh1) {
+                motherGenotype[1].forEach(function (motherRh2) {
+                    fatherGenotype[1].forEach(function (fatherRh1) {
+                        fatherGenotype[1].forEach(function (fatherRh2) {
+                            var childRhGenotype = [motherRh1, motherRh2, fatherRh1, fatherRh2];
+                            var rhFactor = determineRhFactor(childRhGenotype);
+                            rhFactors[rhFactor]++;
+                            totalRhCombinations++;
+                        });
+                    });
+                });
+            });
+
+            document.getElementById('probA').innerText = (bloodGroups['A'] / totalBloodCombinations * 100).toFixed(2);
+            document.getElementById('probB').innerText = (bloodGroups['B'] / totalBloodCombinations * 100).toFixed(2);
+            document.getElementById('probAB').innerText = (bloodGroups['AB'] / totalBloodCombinations * 100).toFixed(2);
+            document.getElementById('probO').innerText = (bloodGroups['O'] / totalBloodCombinations * 100).toFixed(2);
+            document.getElementById('rhFactor').innerText = (rhFactors['+'] / totalRhCombinations * 100).toFixed(2) + '% positivo (Rh+)';
+
+            document.getElementById('result').style.display = 'block';
+        }
+
+        function determineBloodGroup(combo) {
+            if (combo.includes('IA') && combo.includes('IB')) {
+                return 'AB';
+            } else if (combo.includes('IA')) {
+                return 'A';
+            } else if (combo.includes('IB')) {
+                return 'B';
+            } else {
+                return 'O';
+            }
+        }
+
+        function determineRhFactor(combo) {
+            if (combo.includes('+')) {
+                return '+';
+            } else {
+                return '-';
+            }
+        }
+
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+
+</body>
+
+</html>
